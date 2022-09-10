@@ -9,56 +9,47 @@ const Candidate = require("../model/candidateSchema");
 const Employer = require("../model/employerSchema");
 const Contactus = require("../model/contactusShcema");
 const Newsletter = require("../model/newsletterSchema");
-const multer = require("multer");
+const JobPost = require("../model/jobPostSchema");
 
+const multer = require("multer");
+const { Router } = require("express");
 // Create Storage
 const storage = multer.diskStorage({
-  destination: (req, file, callback) => {
-    callback(null, "uploads/");
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
   },
-  filename: (req, file, callback) => {
-    callback(null, Date.now() + "_" + file.originalname);
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
-const upload = multer({ storage: storage });
+const uploadStorage = multer({ storage: storage });
 
 // Create new Candidate  Registration api
-router.post("/candidate", upload.single("file"), (req, res) => {
-  console.log("Uploading candidate Registration api...");
-
-  // const { name, number, email, resume, password, cpassword } = req.body;
-
-  // if (!name || !number || !email || !resume || !password || !cpassword) {
-  //   return res.status(402).send("Please fill all the fields");
-  // }
+router.post("/candidate", uploadStorage.single("file"), (req, res) => {
   try {
-    const candidateExist = Candidate.findOne({ email: email });
-    if (candidateExist) {
-      return res.status(400).send("Candidate already exists");
-    } else if (password !== cpassword) {
-      return res.status(404).send("Password does not match");
-    } else {
-      const candidate = new Candidate({
-        name: req.body.name,
-        number: req.body.number,
-        email: req.body.email,
-        resume: req.files.originalname,
-        password: req.body.password,
-        cpassword: req.body.cpassword,
-      });
+    // console.log("Uploading candidate Registration api...");
+    // const candidateExist = Candidate.findOne({ email: email });
+    // console.log(candidateExist);
 
-      candidate.save();
-      res.status(200).send("Candidate created successfully");
-    }
+    const candidate = new Candidate({
+      name: req.body.name,
+      number: req.body.number,
+      email: req.body.email,
+      file: req.file.originalname,
+      password: req.body.password,
+      cpassword: req.body.cpassword,
+    });
+    candidate.save();
+    res.status(200).send("Candidate created successfully");
   } catch (err) {
-    res.status(500).send(err);
+    console.log(err)
   }
 });
-// Create Get candidate data
+//  Get candidate data
 router.get("/candidate", async (req, res) => {
   try {
-    const candidate = await Candidate.findOne();
+    const candidate = await Candidate.find();
     res.status(200).send(candidate);
   } catch (err) {
     res.status(500).send(err);
@@ -76,8 +67,15 @@ router.post("/employer", async (req, res) => {
     password,
     cpassword,
   } = req.body;
-
-  if (!industry || !companyName || !fullName || !number || !email) {
+  if (
+    !industry ||
+    !companyName ||
+    !fullName ||
+    !number ||
+    !email ||
+    !password ||
+    !cpassword
+  ) {
     return res.status(402).send("Please fill all the fields");
   }
   try {
@@ -103,6 +101,17 @@ router.post("/employer", async (req, res) => {
     res.status(500).send(err);
   }
 });
+
+// Get Employers
+router.get("/employer", async (req, res) => {
+  try {
+    const employer = await Employer.findOne();
+    res.status(200).send(employer);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 // Candidate Login Api
 router.post("/candidateLogin", async (req, res) => {
   try {
@@ -224,7 +233,71 @@ router.get("/newsletter", async (req, res) => {
   }
 });
 
-// Newsletter
+// add job data api
+router.post("/jobpost", async (req, res) => {
+  try {
+    const {
+      position,
+      companyName,
+      location,
+      budget,
+      jobTime,
+      jobDescription,
+      jobResponsibilities,
+      jobRequirements,
+    } = req.body;
+    if (
+      (!position,
+      !companyName,
+      !location,
+      !budget,
+      !jobTime,
+      !jobDescription,
+      !jobResponsibilities,
+      !jobRequirements)
+    ) {
+      res.status(401).send({ message: " Fill all  required fields" });
+    } else {
+      const post = new JobPost({
+        position,
+        companyName,
+        location,
+        budget,
+        jobTime,
+        jobDescription,
+        jobResponsibilities,
+        jobRequirements,
+      });
+      await post.save();
+
+      res.status(201).json({ message: "added job" });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+});
+// get Job Data Api
+router.get("/jobpost", async (req, res) => {
+  try {
+    const job = await JobPost.find();
+    res.status(200).json(job);
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+// Jobpost Delete Api
+router.delete("/jobpost", async (req, res) => {
+  try {
+    const job = await JobPost.find();
+    await job.remove();
+
+    res.status(200).json({ message: "job deleted" });
+  } catch (e) {
+    console.log(e);
+  }
+});
+
 // Logout user
 router.get("/logout", (req, res) => {
   res.clearCookie("jwtoken", { path: "/" });

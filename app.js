@@ -1,26 +1,30 @@
 const dotenv = require("dotenv");
-const mongoose = require('mongoose');
-const express = require('express');
-const cookieParser = require('cookie-parser');
+const mongoose = require("mongoose");
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 const app = express();
 app.use(cookieParser());
 
-dotenv.config({ path: './config.env' });
+dotenv.config({ path: ".env" });
 
-require('./db/conn');
+require("./db/conn");
 
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+app.options("*", cors());
+app.use(express.json());
 
 app.use(express.json());
 
-// we link the router files to make our route easy  
-app.use(require('./router/route'));
-
+app.use('/api',require("./router/route"));
 
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
-    console.log(`server is runnig at port no ${PORT}`);
-})
-
-
+  console.log(`server is running at port no ${PORT}`);
+});

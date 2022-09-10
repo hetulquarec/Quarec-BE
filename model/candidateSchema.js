@@ -23,7 +23,7 @@ const candidatesSchema = new mongoose.Schema({
     type: "String",
     required: true,
   },
-  resume: {
+  file: {
     type: String,
     required: true,
   },
@@ -44,9 +44,7 @@ const candidatesSchema = new mongoose.Schema({
 
 // we are hashing the password
 candidatesSchema.pre("save", async function (next) {
-  console.log("Hii I am pre ");
   if (this.isModified("password")) {
-    console.log("Hii I am pre password ");
     this.password = await bcrypt.hash(this.password, 12);
     this.cpassword = await bcrypt.hash(this.cpassword, 12);
   }
