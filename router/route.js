@@ -4,46 +4,57 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const authenticate = require("../middleware/authenticate");
 const mongoose = require("mongoose");
+const moment = require("moment");
+const multer = require("multer");
 require("../db/conn");
 const Candidate = require("../model/candidateSchema");
 const Employer = require("../model/employerSchema");
 const Contactus = require("../model/contactusShcema");
 const Newsletter = require("../model/newsletterSchema");
 const JobPost = require("../model/jobPostSchema");
+const Gallery = require("../model/gallerySchema");
 
-const multer = require("multer");
-const { Router } = require("express");
-// Create Storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
+//  Gallery img storage path
+const imgconfig = multer.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, "./gallery");
   },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+  filename: (req, file, callback) => {
+    callback(null, `imgae-${Date.now()}. ${file.originalname}`);
   },
 });
 
-const uploadStorage = multer({ storage: storage });
-
+//  Gallery img filter
+const isImage = (req, file, callback) => {
+  if (file.mimetype.startsWith("image")) {
+    callback(null, true);
+  } else {
+    callback(new Error("only images is allowd"));
+  }
+};
+const upload = multer({
+  storage: imgconfig,
+  fileFilter: isImage,
+});
 // Create new Candidate  Registration api
-router.post("/candidate", uploadStorage.single("file"), (req, res) => {
+router.post("/candidate", async (req, res) => {
+  // const { filename } = req.file;
+  const { name, number, email, password, cpassword } = req.body;
   try {
-    // console.log("Uploading candidate Registration api...");
-    // const candidateExist = Candidate.findOne({ email: email });
-    // console.log(candidateExist);
-
+    const date = moment(new Date().format("YYYY-MM-DD"));
     const candidate = new Candidate({
-      name: req.body.name,
-      number: req.body.number,
-      email: req.body.email,
-      file: req.file.originalname,
-      password: req.body.password,
-      cpassword: req.body.cpassword,
+      name: name,
+      number: number,
+      email: email,
+      // filepath: filename,
+      password: password,
+      cpassword: cpassword,
+      date: date,
     });
-    candidate.save();
-    res.status(200).send("Candidate created successfully");
+    const finaldata = await candidate.save();
+    res.status(201).send({ status: 201, finaldata });
   } catch (err) {
-    console.log(err)
+    res.status(401).json({ status: 401, error });
   }
 });
 //  Get candidate data
@@ -287,17 +298,70 @@ router.get("/jobpost", async (req, res) => {
 });
 
 // Jobpost Delete Api
-router.delete("/jobpost", async (req, res) => {
-  try {
-    const job = await JobPost.find();
-    await job.remove();
+router.delete("jobpost/:id",async(req,res)=>{
 
-    res.status(200).json({ message: "job deleted" });
+  try {
+      const {id} = req.params;
+
+      const dltUser = await users.findByIdAndDelete({_id:id});
+
+      res.status(201).json({status:201,dltUser});
+
+  } catch (error) {
+      res.status(401).json({status:401,error})
+  }
+
+})
+
+// Gallery POST api
+router.post("/gallery", upload.single("photo"), async (req, res) => {
+  const { category } = req.body;
+  const { filename } = req.file;
+
+  if (!category || !filename) {
+    res.status(401).json({ status: 401, message: "fill all the data" });
+  }
+  try {
+    const date = moment(new Date()).format("YYYY-MM-DD");
+
+    const gallery = new Gallery({
+      category: category,
+      imgpath: filename,
+    });
+    const finaldata = await gallery.save();
+
+    res.status(201).json({ status: 201, finaldata });
   } catch (e) {
     console.log(e);
   }
 });
 
+// Gallery get api
+router.get("/gallery", async (req, res) => {
+  try {
+    const gallery = await Gallery.find();
+
+    res.status(200).json({ status: 200, gallery });
+  } catch (e) {
+    console.log(e);
+  } 
+});
+// Gallery Delete api
+
+router.delete('/:id',  async (req, res) => {
+  try {
+    const {id} = req.params;
+    
+      const imageDelete = await Gallery.findOneAndDelete({ _id: id });
+      if (!imageDelete) {
+          return res.status(404).json({ error: "Gallery Image not found" });
+      }
+      res.status(200).json({ message: "Gallery Data Delete Successfully" });
+  } catch (err) {
+      console.log(err);
+  }
+}
+);
 // Logout user
 router.get("/logout", (req, res) => {
   res.clearCookie("jwtoken", { path: "/" });

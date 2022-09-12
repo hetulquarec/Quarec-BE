@@ -16,14 +16,14 @@ const candidatesSchema = new mongoose.Schema({
     required: true,
   },
   password: {
-    type: "String",
+    type: String,
     required: true,
   },
   cpassword: {
-    type: "String",
+    type: String,
     required: true,
   },
-  file: {
+  filepath: {
     type: String,
     required: true,
   },
