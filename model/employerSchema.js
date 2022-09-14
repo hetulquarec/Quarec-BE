@@ -16,19 +16,19 @@ const employerSchema = new mongoose.Schema({
     required: true,
   },
   number: {
-    type: "String",
+    type: String,
     required: true,
   },
   password: {
-    type: "String",
+    type: String,
     required: true,
   },
   cpassword: {
-    type: "String",
+    type: String,
     required: true,
   },
   email: {
-    type: "String",
+    type: String,
     required: true,
   },
   date: {

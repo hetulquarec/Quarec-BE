@@ -1,19 +1,17 @@
 const mongoose = require("mongoose");
-
-const gallerySchema = new mongoose.Schema(
+const Gallery = new mongoose.Schema(
   {
-
     category: {
       type: String,
-      required: true,
     },
-    imgpath:{
-        type: String,
-        required: true,
-    }
+    image: {
+      type: String,
+    },
+    cloudinary_id: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
-const Gallery = mongoose.model("GALLERY", gallerySchema);
-module.exports = Gallery;
+module.exports = mongoose.model("GALLERY", Gallery);

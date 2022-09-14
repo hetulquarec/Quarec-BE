@@ -21,7 +21,7 @@ app.use(express.json());
 
 app.use(express.json());
 
-app.use('/api',require("./router/route"));
+app.use("/api", require("./router/route"));
 
 const PORT = process.env.PORT;
 

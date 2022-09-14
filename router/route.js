@@ -13,29 +13,9 @@ const Contactus = require("../model/contactusShcema");
 const Newsletter = require("../model/newsletterSchema");
 const JobPost = require("../model/jobPostSchema");
 const Gallery = require("../model/gallerySchema");
+const cloudinary = require("../utils/cloudinary");
+const upload = require("../utils/multer");
 
-//  Gallery img storage path
-const imgconfig = multer.diskStorage({
-  destination: (req, file, callback) => {
-    callback(null, "./gallery");
-  },
-  filename: (req, file, callback) => {
-    callback(null, `imgae-${Date.now()}. ${file.originalname}`);
-  },
-});
-
-//  Gallery img filter
-const isImage = (req, file, callback) => {
-  if (file.mimetype.startsWith("image")) {
-    callback(null, true);
-  } else {
-    callback(new Error("only images is allowd"));
-  }
-};
-const upload = multer({
-  storage: imgconfig,
-  fileFilter: isImage,
-});
 // Create new Candidate  Registration api
 router.post("/candidate", async (req, res) => {
   // const { filename } = req.file;
@@ -54,9 +34,10 @@ router.post("/candidate", async (req, res) => {
     const finaldata = await candidate.save();
     res.status(201).send({ status: 201, finaldata });
   } catch (err) {
-    res.status(401).json({ status: 401, error });
+    res.status(401).json({ status: 401, err });
   }
 });
+
 //  Get candidate data
 router.get("/candidate", async (req, res) => {
   try {
@@ -298,41 +279,35 @@ router.get("/jobpost", async (req, res) => {
 });
 
 // Jobpost Delete Api
-router.delete("jobpost/:id",async(req,res)=>{
-
+router.delete("jobpost/:id", async (req, res) => {
   try {
-      const {id} = req.params;
+    const { id } = req.params;
 
-      const dltUser = await users.findByIdAndDelete({_id:id});
+    const dltUser = await users.findByIdAndDelete({ _id: id });
 
-      res.status(201).json({status:201,dltUser});
-
+    res.status(201).json({ status: 201, dltUser });
   } catch (error) {
-      res.status(401).json({status:401,error})
+    res.status(401).json({ status: 401, error });
   }
-
-})
+});
 
 // Gallery POST api
-router.post("/gallery", upload.single("photo"), async (req, res) => {
-  const { category } = req.body;
-  const { filename } = req.file;
-
-  if (!category || !filename) {
-    res.status(401).json({ status: 401, message: "fill all the data" });
-  }
+router.post("/gallery", upload.single("image"), async (req, res) => {
   try {
-    const date = moment(new Date()).format("YYYY-MM-DD");
+    // Upload image to cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path);
 
-    const gallery = new Gallery({
-      category: category,
-      imgpath: filename,
+    // Create new user
+    const user = new Gallery({
+      category: req.body.category,
+      image: result.secure_url,
+      cloudinary_id: result.public_id,
     });
-    const finaldata = await gallery.save();
-
-    res.status(201).json({ status: 201, finaldata });
-  } catch (e) {
-    console.log(e);
+    // Save user
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    console.log(err);
   }
 });
 
@@ -340,28 +315,26 @@ router.post("/gallery", upload.single("photo"), async (req, res) => {
 router.get("/gallery", async (req, res) => {
   try {
     const gallery = await Gallery.find();
-
-    res.status(200).json({ status: 200, gallery });
+    res.status(201).json({ status: 200, gallery });
   } catch (e) {
     console.log(e);
-  } 
+  }
 });
 // Gallery Delete api
 
-router.delete('/:id',  async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const {id} = req.params;
-    
-      const imageDelete = await Gallery.findOneAndDelete({ _id: id });
-      if (!imageDelete) {
-          return res.status(404).json({ error: "Gallery Image not found" });
-      }
-      res.status(200).json({ message: "Gallery Data Delete Successfully" });
+    // Find user by id
+    const  user = await Gallery.findById(req.params.id);
+    // Delete image from cloudinary
+    await cloudinary.uploader.destroy(user.cloudinary_id);
+    // Delete user from db
+    await user.remove();
+    res.json(user);
   } catch (err) {
-      console.log(err);
+    console.log(err);
   }
-}
-);
+});
 // Logout user
 router.get("/logout", (req, res) => {
   res.clearCookie("jwtoken", { path: "/" });
