@@ -5,27 +5,24 @@ const mongoose = require("mongoose");
 const candidatesSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
   },
   number: {
     type: String,
-    required: true,
   },
   email: {
     type: String,
-    required: true,
   },
   password: {
     type: String,
-    required: true,
   },
   cpassword: {
     type: String,
-    required: true,
   },
-  filepath: {
+  file: {
     type: String,
-    required: true,
+  },
+  cloudinary_id: {
+      type: String,
   },
 
   date: {

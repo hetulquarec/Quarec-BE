@@ -31,6 +31,12 @@ const employerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  file: {
+    type: String,
+  },
+  cloudinary_id: {
+    type: String,
+  },
   date: {
     type: Date,
     default: Date.now,
