@@ -248,7 +248,7 @@ router.put("/:id", upload.single("logo"), async (req, res) => {
     }
     const data = {
       position: req.body.position || user.position,
-      companyName: req.body.companyName,
+      companyName: req.body.companyName || user.companyName,
       location: req.body.location || user.location,
       budget: req.body.budget || user.budget,
       jobTime: req.body.jobTime || user.jobTime,
